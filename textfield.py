@@ -6,11 +6,12 @@ class Text:
         self.text = text
         self.font = font
         self.color = color
-        self.title_surface = font.render(self.text, True, self.color)
+
         self.pos = pos
 
     def draw(self, surface):
-        surface.blit(self.title_surface, self.pos)
+        title_surface = self.font.render(self.text, True, self.color)
+        surface.blit(title_surface, self.pos)
 
 
 class TextField:

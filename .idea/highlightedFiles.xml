@@ -10,6 +10,7 @@
       <node color="4" path="$PROJECT_DIR$/pages.py" />
       <node color="3" path="$PROJECT_DIR$/player.py" />
       <node color="3" path="$PROJECT_DIR$/races.py" />
+      <node color="4" path="$PROJECT_DIR$/Spells.py" />
       <node color="4" path="$PROJECT_DIR$/textfield.py" />
     </files>
     <colors>

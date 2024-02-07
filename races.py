@@ -1,6 +1,17 @@
 from collections import defaultdict 
 
 
+class RaceGeneric:
+    def __init__(self):
+        self.age = 0
+        self.weight = 0
+        self.speed = 25
+
+        self.languages = defaultdict(lambda: False)
+        self.languages['Common'] = True
+
+        self.name = None
+
 class Gnome:
     def __init__(self):
 
@@ -30,6 +41,8 @@ class ForestGnome(Gnome):
 class RockGnome(Gnome):
     def __init__(self):
         Gnome.__init__(self)
+        self.name = 'Rock Gnome'
+
         self.bonus_ability_scores['con'] += 1
 
         self.artificers_lore = True

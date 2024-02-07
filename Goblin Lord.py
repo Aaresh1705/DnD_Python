@@ -15,13 +15,15 @@ def main():
     clock = pygame.time.Clock()
     font = pygame.font.SysFont(None, 24)
 
+    player = Player()
+
     space = 150
     bars = defaultdict(lambda: [pygame.Rect(0, 0, 0, 0), None]) 
 
-    bars['main_bar'] = [pygame.Rect(5, 5, 100, 30), MainPage(surface)]
-    bars['inv_bar'] = [pygame.Rect(5+space, 5, 100, 30), InvPage(surface)]
-    bars['turn_bar'] = [pygame.Rect(5+space*2, 5, 100, 30), TurnPage(surface)]
-    bars['change_bar'] = [pygame.Rect(5+space*3, 5, 100, 30), ChangePage(surface)]
+    bars['main_bar'] = [pygame.Rect(5, 5, 100, 30), MainPage(surface, player)]
+    bars['inv_bar'] = [pygame.Rect(5+space, 5, 100, 30), InvPage(surface, player)]
+    bars['turn_bar'] = [pygame.Rect(5+space*2, 5, 100, 30), TurnPage(surface, player)]
+    bars['change_bar'] = [pygame.Rect(5+space*3, 5, 100, 30), ChangePage(surface, player)]
 
     active_bar = 'main_bar'
     page = bars['main_bar'][1]
@@ -40,7 +42,7 @@ def main():
 
             surface.blit(text_surf, text_rect)
 
-    player = Player()
+
     
     while True:
         for event in pygame.event.get():
@@ -54,6 +56,11 @@ def main():
 
                 if event.key == pygame.K_c:
                     player.save()
+
+                if event.key == pygame.K_f:
+                    player.update_class()
+                    player.level += 1
+                    print(player.char_class.spell_slots)
 
             if event.type == pygame.VIDEORESIZE:
                 old_surface_saved = surface
@@ -73,8 +80,6 @@ def main():
             page.handle_event(event)
                             
         surface.fill(0x1F1F1F)
-    
-        print(player.abilityscores)
 
         draw_bars()
 

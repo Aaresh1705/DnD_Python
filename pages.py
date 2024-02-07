@@ -7,24 +7,44 @@ from player import Player
 
 
 class MainPage:
-    def __init__(self, surface: pygame.Surface):
-        a, b = surface.get_width(), surface.get_height()
-        self.x = pygame.Rect(a-100, b-100, 100, 100)
+    def __init__(self, surface: pygame.Surface, *args):
+        self.font = pygame.font.SysFont(None, 24)
+        self.level_text = Text(self.font, "level: 0", (20, 50), (255, 255, 255))
+        self.race_text = Text(self.font, "None", (20, 100), (255, 255, 255))
+        self.class_text = Text(self.font, "None", (20, 150), (255, 255, 255))
+        self.background_text = Text(self.font, "None", (20, 200), (255, 255, 255))
+        self.max_health = Text(self.font, "None", (20, 400), (255, 255, 255))
+        self.cur_health = Text(self.font, "None", (20, 450), (255, 255, 255))
+
+        self.score = [Text(self.font, "?", (400, 150+50*index), (255, 255, 255))
+                      for index in range(len(args[0].abilityscores))]
 
     def draw(self, surface: pygame.Surface, *args):
-        a, b = surface.get_width(), surface.get_height()
-        self.x = pygame.Rect(a-100, b-100, 100, 100)
+        self.level_text.text = 'Level: ' + str(args[0].level)
+        self.level_text.draw(surface)
+        self.race_text.text = 'Race: ' + str(args[0].race.name)
+        self.race_text.draw(surface)
+        self.class_text.text = 'Class: ' + str(args[0].char_class.name)
+        self.class_text.draw(surface)
+        self.background_text.text = 'Background: ' + str(args[0].background.name)
+        self.background_text.draw(surface)
+        self.max_health.text = 'Max health: ' + str(args[0].max_health)
+        self.max_health.draw(surface)
+        self.cur_health.text = 'Current health: ' + str(args[0].current_health)
+        self.cur_health.draw(surface)
 
-        pygame.draw.rect(surface, 0xFF0000, self.x)
+        for index, (score_name, val) in enumerate(args[0].abilityscores.items()):
+            self.score[index].text = f"{score_name}: {val}"
+
+        for i in self.score:
+            i.draw(surface)
 
     def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.x.collidepoint(event.pos):
-                print(event.pos)
+        pass
 
 
 class InvPage:
-    def __init__(self, surface: pygame.Surface):
+    def __init__(self, surface: pygame.Surface, *args):
         a, b = surface.get_width(), surface.get_height()
         self.x = pygame.Rect(a-100, b-100, 100, 100)
 
@@ -41,7 +61,7 @@ class InvPage:
 
 
 class TurnPage:
-    def __init__(self, surface: pygame.Surface):
+    def __init__(self, surface: pygame.Surface, *args):
         a, b = surface.get_width(), surface.get_height()
         self.x = pygame.Rect(a-100, b-100, 100, 100)
 
@@ -58,7 +78,7 @@ class TurnPage:
 
 
 class ChangePage:
-    def __init__(self, surface: pygame.Surface):
+    def __init__(self, surface: pygame.Surface, *args):
         self.font = pygame.font.SysFont(None, 24)
         titles_1 = ["race & subrace", "class & subclass", "background"]
         self.output_var_1 = ["race", "char_class", "background"]
@@ -95,6 +115,7 @@ class ChangePage:
                     setattr(player, attr_name, self.class_list[index][box.output])
                     box.deselect()
                     print(getattr(player, attr_name, None))
+                box.output = None
 
         for index, box in enumerate(self.input_boxes_2_1):
             if box.output:
