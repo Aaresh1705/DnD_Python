@@ -1,0 +1,14 @@
+Index: player.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/player.py b/player.py
+--- a/player.py	
++++ b/player.py	(date 1707323534384)
+@@ -17,4 +17,4 @@
+         pass
+ 
+     def save(self):
+-        pass TODO
++        pass  # TODO: Make character save code
