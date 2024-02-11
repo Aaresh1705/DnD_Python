@@ -9,6 +9,20 @@ from player import Player
 
 
 def main():
+    print("---============================---")
+    character_file = input(
+        "Input the file where you have saved your character,"
+        "\nif you have not saved character yet then just press enter:")
+
+    save_file = character_file
+    if not character_file:
+        print("---======---")
+        while not save_file:
+            save_file = input("Input the file location where you want to save your character:")
+            if save_file:
+                break
+            print("Invalid input")
+
     surface = pygame.display.set_mode((800, 600), pygame.RESIZABLE)
     pygame.display.set_caption("Goblin Lord")
 
@@ -16,6 +30,8 @@ def main():
     font = pygame.font.SysFont(None, 24)
 
     player = Player()
+    if character_file:
+        player = player.load(character_file)
 
     space = 150
     bars = defaultdict(lambda: [pygame.Rect(0, 0, 0, 0), None]) 
@@ -42,25 +58,23 @@ def main():
 
             surface.blit(text_surf, text_rect)
 
-
-    
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()
 
-                if event.key == pygame.K_c:
-                    player.save()
+                if event.key == pygame.K_q:
+                    player.save(save_file)
 
-                if event.key == pygame.K_f:
-                    player.update_class()
-                    player.level += 1
-                    print(player.char_class.spell_slots)
+                """if event.key == pygame.K_q:
+                    player.update()
+                    player.level += 1"""
 
             if event.type == pygame.VIDEORESIZE:
                 old_surface_saved = surface
@@ -77,14 +91,15 @@ def main():
                             
                             break
 
-            page.handle_event(event)
+            page.handle_event(event, player)
                             
         surface.fill(0x1F1F1F)
 
-        draw_bars()
-
         page.draw(surface, player)
 
+        player.update()
+
+        draw_bars()
         pygame.display.flip()
         clock.tick(30)
 

@@ -7,10 +7,14 @@ class RaceGeneric:
         self.weight = 0
         self.speed = 25
 
-        self.languages = defaultdict(lambda: False)
+        self.languages = defaultdict(bool)
         self.languages['Common'] = True
 
+        self.bonus_ability_scores = defaultdict(int)
+        self.skill_ability_scores = defaultdict(int)
+
         self.name = None
+
 
 class Gnome:
     def __init__(self):
@@ -21,12 +25,14 @@ class Gnome:
         self.darkvision = True
         self.gnome_cunning = True
 
-        self.languages = defaultdict(lambda: False)
+        self.languages = defaultdict(bool)
         self.languages['Common'] = True
         self.languages['Gnomish'] = True
 
-        self.bonus_ability_scores = defaultdict(lambda: 0) 
+        self.bonus_ability_scores = defaultdict(int)
         self.bonus_ability_scores['int'] += 2
+
+        self.skill_ability_scores = defaultdict(int)
 
 
 class ForestGnome(Gnome):

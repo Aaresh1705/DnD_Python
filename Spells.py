@@ -484,8 +484,10 @@ class ArtificerSpellList:
                 print(f"Spell {spell_name} not found in Level0 spells.")
 
 
+"""
 artificer_spell_list = ArtificerSpellList()
 artificer_spell_list.load()
 
 for spell in artificer_spell_list.level2:
     print(f"{spell.name}: {spell.school}")
+"""

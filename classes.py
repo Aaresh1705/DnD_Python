@@ -1,23 +1,29 @@
 from collections import defaultdict
-
+from Spells import ArtificerSpellList
 
 class ClassGeneric:
     def __init__(self):
-        self.spell_slots = defaultdict(lambda: 0)
+        self.spell_slots = defaultdict(int)
 
         self.name = None
 
     def update(self, *args):
         pass
 
+    @staticmethod
+    def calculate_proficiency_bonus(level):
+        pass
+
 
 class Artificer:
     def __init__(self):
-
         self.infusions = 0
         self.max_infusions = 0
         
-        self.spell_slots = defaultdict(lambda: 0)
+        self.spell_slots = defaultdict(int)
+
+        self.artificer_spell_list = ArtificerSpellList()
+        self.artificer_spell_list.load()
 
     def update(self, level):
         self.spell_slot_update(level)
@@ -60,6 +66,19 @@ class Artificer:
 
         if level >= 19:
             self.spell_slots['5'] = 2
+
+    @staticmethod
+    def calculate_proficiency_bonus(level):
+        if level <= 4:
+            return 2
+        elif level <= 8:
+            return 3
+        elif level <= 12:
+            return 4
+        elif level <= 16:
+            return 5
+        else:
+            return 6
 
     def known_spells(self):
         pass
