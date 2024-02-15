@@ -1,4 +1,6 @@
-from collections import defaultdict 
+from collections import defaultdict
+from buffs import Buffs
+from actions import Actions
 
 
 class RaceGeneric:
@@ -6,6 +8,9 @@ class RaceGeneric:
         self.age = 0
         self.weight = 0
         self.speed = 25
+
+        self.buffs = defaultdict()
+        self.actions = defaultdict()
 
         self.languages = defaultdict(bool)
         self.languages['Common'] = True
@@ -22,8 +27,12 @@ class Gnome:
         self.age = 0 
         self.weight = 0
         self.speed = 25
-        self.darkvision = True
-        self.gnome_cunning = True
+
+        self.buffs = defaultdict(object)
+        self.buffs['darkvision'] = Buffs.Darkvison()
+        self.buffs['gnome cunning'] = Buffs.GnomeCunning()
+
+        self.actions = defaultdict()
 
         self.languages = defaultdict(bool)
         self.languages['Common'] = True
@@ -51,8 +60,9 @@ class RockGnome(Gnome):
 
         self.bonus_ability_scores['con'] += 1
 
-        self.artificers_lore = True
-        self.tinker = True
+        self.buffs['artificers lore'] = Buffs.ArtificersLore()
+
+        self.actions['tinker'] = Actions.Tinker()
 
 
 RACES = {'rock gnome': RockGnome(), 'forest gnome': ForestGnome()}

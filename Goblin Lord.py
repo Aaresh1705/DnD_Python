@@ -3,7 +3,7 @@ pygame.init()
 import numpy as np
 import sys
 from icecream import ic
-from pages import MainPage, InvPage, TurnPage, ChangePage
+from pages import MainPage, InvPage, SpellPage, TurnPage, ChangePage
 from collections import defaultdict 
 from player import Player
 
@@ -38,8 +38,9 @@ def main():
 
     bars['main_bar'] = [pygame.Rect(5, 5, 100, 30), MainPage(surface, player)]
     bars['inv_bar'] = [pygame.Rect(5+space, 5, 100, 30), InvPage(surface, player)]
-    bars['turn_bar'] = [pygame.Rect(5+space*2, 5, 100, 30), TurnPage(surface, player)]
-    bars['change_bar'] = [pygame.Rect(5+space*3, 5, 100, 30), ChangePage(surface, player)]
+    bars['spell_bar'] = [pygame.Rect(5+space*2, 5, 100, 30), SpellPage(surface, player)]
+    bars['turn_bar'] = [pygame.Rect(5+space*3, 5, 100, 30), TurnPage(surface, player)]
+    bars['change_bar'] = [pygame.Rect(5+space*4, 5, 100, 30), ChangePage(surface, player)]
 
     active_bar = 'main_bar'
     page = bars['main_bar'][1]

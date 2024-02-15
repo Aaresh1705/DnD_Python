@@ -7,6 +7,8 @@
       <node color="1" path="$PROJECT_DIR$/Dice Goblin.py" />
       <node color="2" path="$PROJECT_DIR$/dices.py" />
       <node color="3" path="$PROJECT_DIR$/Goblin Lord.py" />
+      <node color="4" path="$PROJECT_DIR$/inventory.py" />
+      <node color="4" path="$PROJECT_DIR$/items.py" />
       <node color="4" path="$PROJECT_DIR$/pages.py" />
       <node color="3" path="$PROJECT_DIR$/player.py" />
       <node color="3" path="$PROJECT_DIR$/races.py" />

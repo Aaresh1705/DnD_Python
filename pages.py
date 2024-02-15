@@ -5,37 +5,17 @@ from classes import *
 from background import *
 from textfield import *
 from player import Player, skill_mapping
-from inventory import Inventory
+from inventory import Inventory, EquipmentSlot
 from items import Items
-
-
-def intToRoman(num):
-    # Storing roman values of digits from 0-9
-    # when placed at different places
-    m = ["", "M", "MM", "MMM"]
-    c = ["", "C", "CC", "CCC", "CD", "D",
-         "DC", "DCC", "DCCC", "CM "]
-    x = ["", "X", "XX", "XXX", "XL", "L",
-         "LX", "LXX", "LXXX", "XC"]
-    i = ["", "I", "II", "III", "IV", "V",
-         "VI", "VII", "VIII", "IX"]
-
-    # Converting to roman
-    thousands = m[num // 1000]
-    hundreds = c[(num % 1000) // 100]
-    tens = x[(num % 100) // 10]
-    ones = i[num % 10]
-
-    ans = (thousands + hundreds +
-           tens + ones)
-
-    return ans
+from icecream import ic
+from global_config import intToRoman, FONT
+from actionbar import ActionBar
 
 
 class MainPage:  # TODO: Make saving throw things
     def __init__(self, surface: pygame.Surface, *args):
         player = args[0]
-        self.font = pygame.font.Font('JetBrainsMono-Light.ttf', 16) #24
+        self.font = pygame.font.Font(FONT, 16)
         self.text_color = (255, 255, 255)
         self.text_elements = {
             'level': (Text(self.font, f"Level: {player.level}",
@@ -53,11 +33,11 @@ class MainPage:  # TODO: Make saving throw things
             'max_health': (Text(self.font, f"Max health: {player.max_health}",
                                 (20, 300), self.text_color), 'Max health'),
 
-            'current_health': (Text(self.font, f"Current health: {player.current_health}",
+            'current_health': (Text(self.font, f"Current health: {player.current_health} + {player.temporary_health}",
                                     (20, 350), self.text_color), 'Current health')
         }
 
-        self.skill_font = pygame.font.Font('JetBrainsMono-Light.ttf', 12)
+        self.skill_font = pygame.font.Font(FONT, 12)
         self.prof_font = pygame.font.SysFont('timesnewroman', 16)
         self.skills = [
             {f'{skill}': f'{skill} ({mapping})', 'total': str(player.skills[skill]),
@@ -94,7 +74,7 @@ class MainPage:  # TODO: Make saving throw things
 
         self.total_scroll = 0
         self.scroll_min = 0
-        self.scroll_max = -400
+        self.scroll_max = -250
 
         self.label_offset = 0
         self.value_offset = 0
@@ -106,9 +86,17 @@ class MainPage:  # TODO: Make saving throw things
 
         # Left Text
         for key, (text_element, text) in self.text_elements.items():
-            attr_name = getattr(player, key, None)
-            attr_name = getattr(attr_name, 'name', None) if hasattr(attr_name, 'name') else attr_name
-            text_element.change_text(f'{text}:  {attr_name}')
+            if key == 'current_health':
+                if getattr(player, 'temporary_health', None):
+                    updated_text = f"Current health: {player.current_health} + {player.temporary_health}"
+                else:
+                    updated_text = f"Current health: {player.current_health}"
+            else:
+                attr_value = getattr(player, key, None)  # Use 'N/A' or another placeholder if the attribute doesn't exist
+                if hasattr(attr_value, 'name'):
+                    attr_value = attr_value.name
+                updated_text = f"{key.replace('_', ' ').title()}: {attr_value}"
+            text_element.change_text(updated_text)
             text_element.draw(surface)
 
         # Hexagon
@@ -223,7 +211,7 @@ class MainPage:  # TODO: Make saving throw things
         attribute_color = pygame.Color('red')
         text_color = pygame.Color('white')
 
-        font = pygame.font.Font('JetBrainsMono-Light.ttf', 14)
+        font = pygame.font.Font(FONT, 14)
 
         # Determine the maximum value for scaling
         max_value = max(ability_scores_dict.values()) if max(ability_scores_dict.values()) > 20 else 20
@@ -286,83 +274,342 @@ class InvPage:  # TODO: Finish InvPage
     def __init__(self, surface: pygame.Surface, *args):
         player = args[0]
 
+        self.font = pygame.font.Font(FONT, 16)
+        self.small_font = pygame.font.Font(FONT, 14)
 
-        self.Inventory_matrix = Inventory(surface, 64*5, 64*8, surface.get_width() - 64*5, surface.get_height()-64*8)
-        player.update_inventory(self.Inventory_matrix)
-        self.font = pygame.font.Font('VeraMono.ttf', 16)
+        self.equipment_slots = {
+            'helmet': EquipmentSlot('helmet', 'helmet', 'images/inventory/helmet.png'),
+            'cloak': EquipmentSlot('cloak', 'cloak', 'images/inventory/cloak.png'),
+            'chestplate': EquipmentSlot('chestplate', 'chestplate', 'images/inventory/armour.png'),
+            'gloves': EquipmentSlot('gloves', 'gloves', 'images/inventory/gloves.png'),
+            'pants': EquipmentSlot('pants', 'pants', 'images/inventory/pants.png'),
+            'boots': EquipmentSlot('boots', 'boots', 'images/inventory/boots.png'),
+            'amulet': EquipmentSlot('amulet', 'amulet', 'images/inventory/necklace.png'),
+            'ring1': EquipmentSlot('ring1', 'ring', 'images/inventory/ring1.png'),
+            'ring2': EquipmentSlot('ring2', 'ring', 'images/inventory/ring2.png'),
+            'meleeMainHand': EquipmentSlot('meleeMainHand', 'staff', 'images/inventory/meleeMainHand.png'),
+            'meleeOffHand': EquipmentSlot('meleeOffHand', 'meleeOffHand', 'images/inventory/meleeOffHand.png'),
+            # ... any other slots ...
+        }
+
+        self.inventory = Inventory(surface, 64*5, 64*8, surface.get_width() - 64*5, surface.get_height()-64*8)
 
     def draw(self, surface: pygame.Surface, *args):
-        self.Inventory_matrix.draw(surface)
+        player = args[0]
+
+        textfileds = []
+        for index, (key, buff) in enumerate(player.grouped_buffs.items()):
+            text = TextWithImage(self.small_font, buff.name, (220, 70 + 45*index), (255, 255, 255), buff.image, buff.description)
+            text.draw(surface)
+            textfileds.append(text)
+
+        start_x = 10  # Adjust as needed
+        start_y = 50  # Adjust as needed
+        padding = 10  # Space between slots
+        for index, slot in enumerate(list(self.equipment_slots.values())[:6]):
+            position = (start_x, start_y + index * (64 + padding))  # Adjust as needed
+            slot.draw(surface, position, player)
+        for index, slot in enumerate(list(self.equipment_slots.values())[6:-2]):
+            position = (start_x+100, start_y + index * (64 + padding))  # Adjust as needed
+            slot.draw(surface, position, player)
+
+        for index, slot in enumerate(list(self.equipment_slots.values())[-2:]):
+            position = (start_x + index * (64 + padding), surface.get_height()-10-64)  # Adjust as needed
+            slot.draw(surface, position, player)
+
+        self.inventory.draw(surface, player)
+
         mouse_pos = pygame.mouse.get_pos()
-        hovered_item = self.Inventory_matrix.get_item_under_mouse(mouse_pos)
+        """hovered_item = self.inventory.get_slot_at_mouse(mouse_pos)
         if hovered_item:
-            self.draw_item_description(surface, hovered_item, mouse_pos)
+            self.draw_item_description(surface, hovered_item, mouse_pos)"""
 
-    def draw_item_description(self, surface, item, position):
-        """Draw a multiline description box for the given item at the specified position."""
-        lines = [
-            item.item.name,  # Assuming 'item' already has the attribute 'name'
-            f"Qty: {item.quantity}",
-            f"Type: {', '.join(item.item.type)}"  # Assuming 'item' has an attribute 'type' which is a list
-        ]
+        for slot in self.equipment_slots.values():
+            if slot.is_hovered(mouse_pos) and slot.item:
+                self.draw_equipment_info(surface, slot.item, slot.position)
 
-        # Calculate the size of the text box
+        if self.inventory.dragging_item:
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            image = pygame.image.load(self.inventory.dragging_item.image)
+            item_image = pygame.transform.scale(
+                image,
+                self.inventory.slot_size
+            )
+            surface.blit(item_image, (mouse_x - self.inventory.slot_size[0] // 2,
+                                      mouse_y - self.inventory.slot_size[1] // 2))
+
+        for slot in self.equipment_slots.values():
+            if slot.dragging:
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                image = pygame.image.load(slot.item.image)
+                item_image = pygame.transform.scale(
+                    image,
+                    self.inventory.slot_size
+                )
+                surface.blit(item_image, (mouse_x - self.inventory.slot_size[0] // 2,
+                                          mouse_y - self.inventory.slot_size[1] // 2))
+
+        for text in textfileds:
+            mouse_pos = pygame.mouse.get_pos()
+            if text.image_rect.collidepoint(mouse_pos):
+                text.draw_description(surface, mouse_pos)
+
+    def draw_equipment_info(self, surface, item, position):
         line_height = self.font.get_linesize()
-        box_width = max(self.font.size(line)[0] for line in lines) + 10
-        box_height = line_height * len(lines) + 10
+        box_width = max(self.font.size(line)[0] for line in item.info) + 10
+        box_height = line_height * len(item.info) + 10
 
         # Create a new surface for the text box with an alpha channel
         text_box_surface = pygame.Surface((box_width, box_height)).convert_alpha()
         text_box_surface.fill((0, 0, 0, 128))  # Semi-transparent background
 
         # Render each line of text
-        for i, line in enumerate(lines):
+        for i, line in enumerate(item.info):
             text_surface = self.font.render(line, True, pygame.Color('white'))
             # Blit the text line onto the text box surface
             text_box_surface.blit(text_surface, (5, 5 + i * line_height))
 
-        right_offset = 10  # You can adjust this value as needed
-        position = (position[0] + right_offset, position[1])
+        right_offset = 70  # You can adjust this value as needed
+        position = (position[0] + right_offset, position[1] - box_height + 64)
 
         # Blit the text box onto the main surface
         surface.blit(text_box_surface, position)
 
     def handle_event(self, event, player):
-        self.Inventory_matrix.handle_event(event)
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 3:
-                player.items.append(Items.Quarterstaff())
-                player.update_inventory(self.Inventory_matrix)
+                mouse_pos = pygame.mouse.get_pos()
+                for slot_name, slot in self.equipment_slots.items():
+                    if slot.slot_rect.collidepoint(mouse_pos):
+                        pass#player.unequip_item(slot_name)
+
+        if event.type == pygame.MOUSEBUTTONUP and self.inventory.dragging_item:
+            mouse_pos = pygame.mouse.get_pos()
+            for slot_name, slot in self.equipment_slots.items():
+                if slot.is_hovered(mouse_pos):
+                    # Check if the types match
+                    if slot.slot_type in self.inventory.dragging_item.type:
+                        player.equip_item(self.inventory.dragging_item, slot_name)
+                        self.inventory.dragging_item = None
+                        break
+
+        for eq_slot_name, eq_slot in self.equipment_slots.items():
+            pos = eq_slot.handle_event(event, player)
+            if pos:
+                inv_slot = self.inventory.get_slot_at_mouse(pos)
+                if inv_slot:
+                    player.add_item_to_inventory(eq_slot.item, *inv_slot)
+                    player.equipment[eq_slot_name] = None
+                break
+
+        self.inventory.handle_event(event, player)
 
 
-class TurnPage:  # TODO: Make TurnPage
+class SpellPage:
     def __init__(self, surface: pygame.Surface, *args):
-        a, b = surface.get_width(), surface.get_height()
-        self.x = pygame.Rect(a - 100, b - 100, 100, 100)
+        self.font = pygame.font.Font(FONT, 16)  # Choose an appropriate font
+        self.surface = surface
 
-    def draw(self, surface: pygame.Surface, *args):
-        a, b = surface.get_width(), surface.get_height()
-        self.x = pygame.Rect(a - 100, b - 100, 100, 100)
+        self.spacing = 20  # Vertical spacing between spells
+        self.level_spacing = 30  # Additional spacing between spell levels
+        self.start_y = 50  # Vertical start position for drawing
+        self.start_x = 250
+        self.current_x = self.start_x
+        self.horizontal_spacing = 250
 
-        pygame.draw.rect(surface, 0x0000FF, self.x)
+        self.scroll_min = 0  # Prevent scrolling above the top of the window
+        self.scroll_max = -2000
+        self.total_scroll = 0
+
+    def draw(self, surface: pygame.Surface, player):
+        for index, level in enumerate(sorted(player.char_class.spell_list.spells.keys())):
+            y_offset = self.start_y
+            # Draw the spell level header
+            level_header = f"Level {level} Spells" if int(level) > 0 else "Cantrips"
+            header_surface = self.font.render(level_header, True, (255, 255, 255))
+            surface.blit(header_surface, (self.current_x + self.horizontal_spacing*index, self.start_y))
+            y_offset += self.level_spacing  # Move down for the spells
+            # Iterate over spells in the current level
+            for spell in player.char_class.spell_list.spells[level]:
+                is_selected = spell in player.char_class.prepared_spells or spell in player.char_class.prepared_cantrips
+                self.draw_spell(surface, spell, self.current_x + self.horizontal_spacing*index, y_offset, is_selected)
+                y_offset += self.spacing  # Move down for the next spell
+            y_offset = 10
+
+        self.draw_sidebar(surface, player)
+
+    def draw_spell(self, surface, spell, x, y, is_selected):
+        """Draw a single spell entry."""
+        color = (0, 255, 0) if is_selected else (255, 255, 255)  # Green for selected, white otherwise
+        text_surface = self.font.render(spell.name, True, color)
+        surface.blit(text_surface, (x, y))  # Adjust positioning as needed
+
+    def draw_sidebar(self, surface, player):
+        """Draw the sidebar with the number of prepared spells."""
+        sidebar_width = 220  # Set the width of the sidebar
+        sidebar_rect = pygame.Rect(0, 0, sidebar_width, self.surface.get_height())
+        pygame.draw.rect(surface, (50, 50, 50), sidebar_rect)  # Draw the sidebar background
+
+        # Set up the initial vertical offset for text
+        y_offset = 20
+        # Draw the header for the sidebar
+        header_surface = self.font.render("Prepared Spells", True, (255, 255, 255))
+        surface.blit(header_surface, (10, y_offset))
+        y_offset += header_surface.get_height() + 10
+
+        # Display the number of prepared cantrips
+        cantrips_text = f"Cantrips: {len(player.char_class.prepared_cantrips)}/{player.char_class.max_prepared_cantrips}"
+        cantrips_surface = self.font.render(cantrips_text, True, (255, 255, 255))
+        surface.blit(cantrips_surface, (10, y_offset))
+        y_offset += cantrips_surface.get_height() + 5
+
+        # Display the number of prepared leveled spells
+        leveled_spells_text = f"Leveled Spells: {len(player.char_class.prepared_spells)}/{player.char_class.max_prepared_leveled_spells}"
+        leveled_spells_surface = self.font.render(leveled_spells_text, True, (255, 255, 255))
+        surface.blit(leveled_spells_surface, (10, y_offset))
+
+        y_offset += leveled_spells_surface.get_height() + 30
+
+        for level, slot in player.char_class.spell_slots.items():
+            spell_slot_text = f"Level {level} Slots: {slot}"
+            pell_slot_surface = self.font.render(spell_slot_text, True, (255, 255, 255))
+            surface.blit(pell_slot_surface, (10, y_offset))
+            y_offset += pell_slot_surface.get_height() + 5
+
 
     def handle_event(self, event, player):
+        """Handle user input to toggle spells on and off."""
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            # Determine which spell, if any, was clicked
+            click_pos = pygame.mouse.get_pos()
+            click = self.get_clicked_spell(click_pos, player)
+            if click:
+                clicked_spell, level = click
+                if level == '0':
+                    self.handle_cantrip_selection(clicked_spell, player)
+                else:
+                    self.handle_leveled_spell_selection(clicked_spell, player)
+
+        elif event.type == pygame.MOUSEWHEEL:
+            # Calculate the scroll amount based on the mouse wheel event
+            scroll_amount = event.y * 30
+            # Update the total scroll amount
+            self.total_scroll += scroll_amount
+
+            self.current_x += scroll_amount
+            if self.current_x > self.start_x:
+                self.current_x = self.start_x
+            elif self.current_x < self.scroll_max:
+                self.current_x = self.scroll_max
+
+    def get_clicked_spell(self, click_pos, player):
+        """Determine which spell was clicked based on the mouse position."""
+        y_offset = self.start_y
+        for index, level in enumerate(sorted(player.char_class.spell_list.spells.keys())):
+            # Account for the level header
+            y_offset += self.level_spacing
+
+            for spell in player.char_class.spell_list.spells[level]:
+                # Calculate the bounding box for the current spell
+                spell_height = self.font.get_linesize()  # Height of one line of text
+                spell_rect = pygame.Rect(self.current_x + self.horizontal_spacing*index, y_offset, 100, spell_height)
+
+                if spell_rect.collidepoint(click_pos):
+                    return spell, level  # Return the clicked spell
+
+                y_offset += self.spacing  # Move to the next spell position
+            y_offset = self.start_y
+
+        return None  # Return None if no spell was clicked
+
+    @staticmethod
+    def handle_cantrip_selection(spell, player):
+        spell_list = player.char_class.prepared_cantrips
+        """Handle selection of leveled spells."""
+        if len(spell_list) < player.char_class.max_prepared_cantrips or spell in spell_list:
+            player.char_class.update_prepared(spell, spell_list)
+    @staticmethod
+    def handle_leveled_spell_selection(spell, player):
+        spell_list = player.char_class.prepared_spells
+        """Handle selection of leveled spells."""
+        if len(spell_list) < player.char_class.max_prepared_leveled_spells or spell in spell_list:
+            player.char_class.update_prepared(spell, spell_list)
+
+
+class TurnPage:
+    def __init__(self, surface: pygame.Surface, *args):
+        player = args[0]
+        self.surface = surface
+
+        self.spell_action_bar = ActionBar([], ((surface.get_width()-10*64)/2, surface.get_height() - 100), (64, 64))
+        self.melee_action_bar = ActionBar([], ((surface.get_width()-10*64)/2, self.spell_action_bar.y - 100 + 64 * (len(player.grouped_actions)/10-1)), (64, 64))
+
+    def draw(self, surface: pygame.Surface, player):
+        # Draw spell action bar
+        self.spell_action_bar.y_start = surface.get_height() - 100
+        self.spell_action_bar.draw(surface, player.char_class.total_prepared)
+        # Draw melee action bar
+        self.melee_action_bar.y_start = self.spell_action_bar.y - 100
+        self.melee_action_bar.draw(surface, player.grouped_actions)
+
+        mouse_pos = pygame.mouse.get_pos()
+        melee_item = self.melee_action_bar.get_item_at_pos(mouse_pos)
+        spell_item = self.spell_action_bar.get_item_at_pos(mouse_pos)
+        if melee_item:
+            self.melee_action_bar.draw_item_description(surface, melee_item, player, mouse_pos)
+        if spell_item:
+            self.spell_action_bar.draw_item_description(surface, spell_item, player, mouse_pos)
+
+    def handle_event(self, event, player):
+        # self.melee_action_bar.handle_event(event, player)
+        self.spell_action_bar.handle_event(event, player)
+        self.melee_action_bar.handle_event(event, player)
+
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.x.collidepoint(event.pos):
-                print(event.pos)
+            # pos = pygame.mouse.get_pos()
+            # # Check for clicks on melee action bar
+            # melee_item = self.melee_action_bar.get_item_at_pos(pos)
+            # if melee_item:
+            #     self.handle_melee_action(melee_item, player)
+            #
+            # # Check for clicks on spell action bar
+            # spell_item = self.spell_action_bar.get_slot_at_pos(pos)
+            # if spell_item:
+            #     self.handle_spell_action(spell_item, player)
+
+            if self.melee_action_bar.enlarge_button.is_clicked(event.pos):
+                if len(player.grouped_actions) <= 20:
+                    player.grouped_actions.extend([None]*10)
+            elif self.melee_action_bar.shrink_button.is_clicked(event.pos):
+                if player.grouped_actions[-10:].count(None) == 10 and len(player.grouped_actions) > 10:
+                    player.grouped_actions = player.grouped_actions[:-10]
+
+            elif self.spell_action_bar.enlarge_button.is_clicked(event.pos):
+                if len(player.char_class.total_prepared) <= 20:
+                    player.char_class.expand_prepared()
+            elif self.spell_action_bar.shrink_button.is_clicked(event.pos):
+                    player.char_class.compress_prepared()
+
+    def handle_melee_action(self, melee_item, player):
+        print(f"Melee action with {melee_item.name} by {player.name}")
+        # TODO: Implement melee action logic
+
+    def handle_spell_action(self, spell_item, player):
+        pass#print(f"Spell action with {spell_item.name} by {player.name}")
+        # TODO: Implement spell action logic
 
 
 class ChangePage:  # TODO: Finish ChangePage
     def __init__(self, surface: pygame.Surface, *args):
         player = args[0]
 
-        self.font = pygame.font.Font('JetBrainsMono-Light.ttf', 16)
+        self.font = pygame.font.Font(FONT, 16)
         titles_1 = ["Race & Subrace", "Class & Subclass", "Background"]
         self.output_var_1 = ["race", "char_class", "background"]
         self.class_list = [RACES, CLASSES, BACKGROUNDS]
 
-        titles_2_1 = ["Level", "Max health", "Current health"]
-        self.output_var_2_1 = ["level", "max_health", "current_health"]
+        titles_2_1 = ["Level", "Max health", "Current health", "Temporary health"]
+        self.output_var_2_1 = ["level", "max_health", "current_health", "temporary_health"]
 
         titles_2_2 = ["str", "dex", "int", 'wis', 'cha', 'con']
         self.output_var_2_2 = titles_2_2
@@ -380,7 +627,7 @@ class ChangePage:  # TODO: Finish ChangePage
         self.input_boxes_2_1 = [
             TextField(300, 100 + 60 * i, 100, 32, self.font, title, text_shift=(5, 5), text=str(text))
             for i, (title, text) in
-            enumerate(zip(titles_2_1, [player.level, player.max_health, player.current_health]))]
+            enumerate(zip(titles_2_1, [player.level, player.max_health, player.current_health, player.temporary_health]))]
         self.input_boxes_2_2 = [
             TextField(20 + 16*4 * j, 320 + 60 * i, 32, 32, self.font, titles_2_2[i + j * 3], text_shift=(5, 5),
                       text=str(list(player.abilityscores_nonmod.values())[i + 3 * j]))
@@ -399,7 +646,7 @@ class ChangePage:  # TODO: Finish ChangePage
                       (255, 255, 255))
 
         self.scroll_min = 0  # Prevent scrolling above the top of the window
-        self.scroll_max = -400
+        self.scroll_max = -270
         self.total_scroll = 0
 
     def text_box_output(self, player: Player):

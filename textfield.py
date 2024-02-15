@@ -51,6 +51,48 @@ class Text:
         self.rect = self.title_surface.get_rect(topleft=(self.rect.x, self.rect.y))
 
 
+class TextWithImage:
+    def __init__(self, font: pygame.font.Font, text: str, pos: tuple, color: tuple, image_path=None, description=""):
+        self.font = font
+        self.text = text
+        self.pos = pos
+        self.color = color
+        self.description = description  # Additional attribute for the description
+
+        if image_path is not None:
+            self.image = pygame.image.load(image_path)
+        else:
+            # Load a default image or create a placeholder
+            self.image = pygame.image.load('images/Unknown.png')
+
+        self.image = pygame.transform.scale(self.image, (32, 32))  # Adjust as needed
+        self.text_offset_x = self.image.get_width() + 10  # Adjust as needed
+        self.image_rect = pygame.Rect(self.pos[0], self.pos[1], self.image.get_width(), self.image.get_height())
+
+    def draw(self, surface):
+        # Draw the image
+        surface.blit(self.image, self.pos)
+
+        # Render and draw the text
+        text_surface = self.font.render(self.text, True, self.color)
+        text_pos = (self.pos[0] + self.text_offset_x, self.pos[1])
+        surface.blit(text_surface, text_pos)
+
+    def draw_description(self, surface, mouse_pos):
+        max_width = max(self.font.size(line)[0] for line in self.description)
+        box_height = len(self.description) * self.font.get_linesize() + 10
+        desc_background = pygame.Surface((max_width + 20, box_height))
+        desc_background.fill((0, 0, 0))
+        desc_background.set_alpha(180)
+
+        desc_pos = (mouse_pos[0] + 20, mouse_pos[1])
+        surface.blit(desc_background, desc_pos)
+
+        for i, line in enumerate(self.description):
+            line_surface = self.font.render(line, True, self.color)
+            surface.blit(line_surface, (desc_pos[0] + 10, desc_pos[1] + 5 + i * self.font.get_linesize()))
+
+
 class TextField:
     def __init__(self, x, y, width, height, font: pygame.font.Font, title, box_width: int = 2, text_shift: tuple = (0, 0), text: str = ''):
         self.rect = pygame.Rect(x, y, width, height)
