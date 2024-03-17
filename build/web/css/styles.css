@@ -1,0 +1,5 @@
+/* Add this to your CSS file */
+.active {
+    background-color: #4CAF50; /* or any highlight color you prefer */
+    color: white;
+}

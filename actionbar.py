@@ -1,5 +1,5 @@
 import pygame
-from global_config import FONT
+from global_config import FONT, get_image
 
 
 class ArrowButton:
@@ -96,18 +96,9 @@ class ActionBar:
             pygame.draw.rect(surface, 0x353535, slot_rect)  # Draw slot background
 
             if item:  # If the item has an image, display it
-                try:
-                    if item.image:
-                        image_surface = pygame.transform.scale(pygame.image.load(item.image).convert_alpha(), self.size)
-                        surface.blit(image_surface, slot_rect.topleft)
-                    else:
-                        image = 'images/Unknown.png'
-                        image_surface = pygame.transform.scale(pygame.image.load(image).convert_alpha(), self.size)
-                        surface.blit(image_surface, slot_rect.topleft)
-                except:
-                    image = 'images/Unknown.png'
-                    image_surface = pygame.transform.scale(pygame.image.load(image).convert_alpha(), self.size)
-                    surface.blit(image_surface, slot_rect.topleft)
+                image_surface = get_image(item.image)
+                surface.blit(image_surface, slot_rect.topleft)
+
 
         self.draw_grid(surface)
 
@@ -124,6 +115,29 @@ class ActionBar:
             end_pos = (self.x + self.columns * self.size[0], start_pos[1])
             pygame.draw.line(surface, (200, 200, 200), start_pos, end_pos, 1)
 
+    def handle_event(self, event, player):
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            clicked_index = self.get_slot_at_pos(pygame.mouse.get_pos())
+            if clicked_index is not None:
+                self.dragged_item = self.items[clicked_index]
+                self.dragged_index = clicked_index
+
+        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            if self.dragged_item:
+                dropped_index = self.get_slot_at_pos(pygame.mouse.get_pos())
+                if dropped_index is not None and dropped_index != self.dragged_index:
+                    # Swap items within the grid
+                    self.items[self.dragged_index], self.items[dropped_index] = self.items[
+                        dropped_index], self.dragged_item
+                self.dragged_item = None
+                self.dragged_index = None
+
+    def get_item_at_pos(self, pos):
+        index = self.get_slot_at_pos(pos)
+        if index is not None:
+            return self.items[index]
+        return None
+
     def get_slot_at_pos(self, pos):
         for index, item in enumerate(self.items):
             column = index % self.columns
@@ -136,12 +150,6 @@ class ActionBar:
             )
             if item_rect.collidepoint(pos):
                 return index
-        return None
-
-    def get_item_at_pos(self, pos):
-        index = self.get_slot_at_pos(pos)
-        if index is not None:
-            return self.items[index]
         return None
 
     def draw_item_description(self, surface, item, player, position):
@@ -187,20 +195,3 @@ class ActionBar:
 
             # Blit the tooltip background onto the main surface at the adjusted position
             surface.blit(tooltip_background, (tooltip_x, tooltip_y))
-
-    def handle_event(self, event, player):
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            clicked_index = self.get_slot_at_pos(pygame.mouse.get_pos())
-            if clicked_index is not None:
-                self.dragged_item = self.items[clicked_index]
-                self.dragged_index = clicked_index
-
-        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-            if self.dragged_item:
-                dropped_index = self.get_slot_at_pos(pygame.mouse.get_pos())
-                if dropped_index is not None and dropped_index != self.dragged_index:
-                    # Swap items within the grid
-                    self.items[self.dragged_index], self.items[dropped_index] = self.items[
-                        dropped_index], self.dragged_item
-                self.dragged_item = None
-                self.dragged_index = None

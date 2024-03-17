@@ -2,15 +2,27 @@
 <project version="4">
   <component name="ProjectTreeColorHighlighter">
     <files>
+      <node color="4" path="$PROJECT_DIR$/actionbar.py" />
       <node color="3" path="$PROJECT_DIR$/background.py" />
       <node color="3" path="$PROJECT_DIR$/classes.py" />
       <node color="1" path="$PROJECT_DIR$/Dice Goblin.py" />
       <node color="2" path="$PROJECT_DIR$/dices.py" />
+      <node color="8" path="$PROJECT_DIR$/dictionarys/__init__.py" />
+      <node color="5" path="$PROJECT_DIR$/dictionarys/actions.py" />
+      <node color="5" path="$PROJECT_DIR$/dictionarys/buffs.py" />
+      <node color="5" path="$PROJECT_DIR$/dictionarys/items.py" />
+      <node color="5" path="$PROJECT_DIR$/dictionarys/Spells.py" />
+      <node color="3" path="$PROJECT_DIR$/global_config.py" />
       <node color="3" path="$PROJECT_DIR$/Goblin Lord.py" />
       <node color="4" path="$PROJECT_DIR$/inventory.py" />
       <node color="4" path="$PROJECT_DIR$/items.py" />
-      <node color="4" path="$PROJECT_DIR$/pages.py" />
+      <node color="3" path="$PROJECT_DIR$/pages.py" />
       <node color="3" path="$PROJECT_DIR$/player.py" />
+      <node color="8" path="$PROJECT_DIR$/playerscripts/__init__.py" />
+      <node color="6" path="$PROJECT_DIR$/playerscripts/background.py" />
+      <node color="6" path="$PROJECT_DIR$/playerscripts/classes.py" />
+      <node color="6" path="$PROJECT_DIR$/playerscripts/player.py" />
+      <node color="6" path="$PROJECT_DIR$/playerscripts/races.py" />
       <node color="3" path="$PROJECT_DIR$/races.py" />
       <node color="4" path="$PROJECT_DIR$/Spells.py" />
       <node color="4" path="$PROJECT_DIR$/textfield.py" />
@@ -20,10 +32,10 @@
       <color id="2" value="#6b1c20" name="Color 2" enabled="true" />
       <color id="3" value="#003f02" name="Color 3" enabled="true" />
       <color id="4" value="#304f25" name="Color 4" enabled="true" />
-      <color id="5" value="#000247" name="Color 5" enabled="true" />
+      <color id="5" value="#1f2b4d" name="Color 5" enabled="true" />
       <color id="6" value="#363780" name="Color 6" enabled="true" />
       <color id="7" value="#311333" name="Color 7" enabled="true" />
-      <color id="8" value="#1e1e1e" name="Color 8" enabled="true" />
+      <color id="8" value="#fffc9d" name="Color 8" enabled="true" />
     </colors>
     <option name="marksForCollapsedHighlights" value="Dots" />
   </component>

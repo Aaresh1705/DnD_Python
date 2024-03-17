@@ -1,5 +1,6 @@
 import pygame
 import math
+from global_config import get_image
 
 
 class Button:
@@ -13,6 +14,14 @@ class Button:
         self.inner_radius = radius
         self.pressed = False
 
+    def draw(self, surface):
+        # Draw the outer circle
+        pygame.draw.ellipse(surface, self.bg_color, self.rect)
+        # Draw the inner circle slightly smaller
+        inner_rect = self.rect.inflate(-4, -4)  # Adjust the border size as needed
+        if self.pressed:
+            pygame.draw.ellipse(surface, self.fg_color, inner_rect)
+
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             # Check if the click is within the rect
@@ -22,17 +31,10 @@ class Button:
                                      (event.pos[1] - self.rect.centery) ** 2)
                 if distance < self.radius:
                     self.pressed = not self.pressed
+
+                    return True
                     # Button was clicked, perform an action
-
-    def draw(self, surface):
-        # Draw the outer circle
-        pygame.draw.ellipse(surface, self.bg_color, self.rect)
-        # Draw the inner circle slightly smaller
-        inner_rect = self.rect.inflate(-4, -4)  # Adjust the border size as needed
-        if self.pressed:
-            pygame.draw.ellipse(surface, self.fg_color, inner_rect)
-        # Center the text on the button
-
+        return False
 
 class Text:
     def __init__(self, font: pygame.font.Font, text, pos, color):
@@ -47,25 +49,22 @@ class Text:
         surface.blit(self.title_surface, self.rect)
 
     def change_text(self, text):
-        self.title_surface = self.font.render(text, True, self.color)
-        self.rect = self.title_surface.get_rect(topleft=(self.rect.x, self.rect.y))
+        if text != self.text:
+            self.text = text
+            self.title_surface = self.font.render(text, True, self.color)
+            self.rect = self.title_surface.get_rect(topleft=(self.rect.x, self.rect.y))
 
 
-class TextWithImage:
-    def __init__(self, font: pygame.font.Font, text: str, pos: tuple, color: tuple, image_path=None, description=""):
+class ImageWithText:
+    def __init__(self, font: pygame.font.Font, text: str, pos: tuple, color: tuple, image_path='', description=""):
         self.font = font
         self.text = text
         self.pos = pos
         self.color = color
         self.description = description  # Additional attribute for the description
 
-        if image_path is not None:
-            self.image = pygame.image.load(image_path)
-        else:
-            # Load a default image or create a placeholder
-            self.image = pygame.image.load('images/Unknown.png')
+        self.image = get_image(image_path, (32, 32))
 
-        self.image = pygame.transform.scale(self.image, (32, 32))  # Adjust as needed
         self.text_offset_x = self.image.get_width() + 10  # Adjust as needed
         self.image_rect = pygame.Rect(self.pos[0], self.pos[1], self.image.get_width(), self.image.get_height())
 
@@ -115,6 +114,27 @@ class TextField:
 
         self.output = None
 
+    def draw(self, surface):
+        self.delete_repeat()
+        self.txt_surface = self.font.render(self.text, True, (255, 255, 255))
+        title_pos = (self.rect.x, self.rect.y - 20)  # Position the title above the text field
+        surface.blit(self.title_surface, title_pos)
+
+        # Blit the text.
+        surface.blit(self.txt_surface, (self.rect.x + self.text_shift[0], self.rect.y + self.text_shift[1]))
+
+        # Blit the rect.
+        pygame.draw.rect(surface, self.color, self.rect, self.width)
+
+    def delete_repeat(self):
+        current_time = pygame.time.get_ticks()
+        if self.active and self.backspace_pressed:
+            if (current_time - self.last_backspace_time) >= self.initial_delay:  # 1 second delay
+                self.delete_character()
+                self.last_backspace_time = current_time
+
+                self.last_backspace_time -= current_time - 1000
+
     def handle_event(self, event: pygame.event.Event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
@@ -134,13 +154,11 @@ class TextField:
                     self.last_backspace_time = pygame.time.get_ticks()
 
                 if event.key == pygame.K_RETURN:
-                    self.output = self.text.lower()
+                    self.output = self.text
 
             if event.type == pygame.TEXTINPUT and self.active:
                 # Add the character from the TEXTINPUT event to the text
                 self.text += event.text
-                # Re-render the text.
-                self.txt_surface = self.font.render(self.text, True, (255, 255, 255))
 
             if event.type == pygame.KEYUP and event.key == pygame.K_BACKSPACE:
                 self.backspace_pressed = False
@@ -148,30 +166,9 @@ class TextField:
     def delete_character(self):
         self.text = self.text[:-1]
 
-        self.txt_surface = self.font.render(self.text, True, (255, 255, 255))
-            
-    def delete_repeat(self):
-        current_time = pygame.time.get_ticks()
-        if self.active and self.backspace_pressed:
-            if (current_time - self.last_backspace_time) >= self.initial_delay:  # 1 second delay
-                self.delete_character()
-                self.last_backspace_time = current_time
-
-                self.last_backspace_time -= current_time - 1000
-
     def deselect(self):
         self.output = None
         self.active = False
         self.color = 0xFFFFFF
 
-    def draw(self, surface):
-        self.delete_repeat()
 
-        title_pos = (self.rect.x, self.rect.y - 20)  # Position the title above the text field
-        surface.blit(self.title_surface, title_pos)
-        
-        # Blit the text.
-        surface.blit(self.txt_surface, (self.rect.x + self.text_shift[0], self.rect.y + self.text_shift[1]))
-        
-        # Blit the rect.
-        pygame.draw.rect(surface, self.color, self.rect, self.width)

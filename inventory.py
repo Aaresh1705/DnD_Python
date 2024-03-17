@@ -1,15 +1,20 @@
-import pygame
 import numpy as np
-from global_config import FONT
+import pygame
+pygame.init()
+from global_config import FONT, get_image
+from dictionarys.items import Items
+
 
 def to_grayscale_optimized(surface):
     # Use pygame.surfarray to get a pixel array of the surface
-    array = pygame.surfarray.pixels3d(surface)
+    original_array = pygame.surfarray.array3d(surface)
     # Calculate the weighted sum of the RGB values
-    array = np.sum(array[..., :3], axis=2)/3
+    array = np.sum(original_array[..., :3], axis=2)/3
     # The result must be converted to an 8-bit integer array
     gray_array = array.astype(np.uint8)
     # Stack the grayscale values into an RGB representation
+    del original_array
+
     gray_surface = pygame.surfarray.make_surface(np.dstack((gray_array, gray_array, gray_array)))
     return gray_surface
 
@@ -30,9 +35,9 @@ class Inventory:
 
         self.search_query = ""
 
-        self.selected_item_index = None
-        self.dragging_item = None
+        # self.selected_item_index = None
         self.dragging_start_pos = None
+        self.dragging = False
 
     def draw(self, surface, player):
         """Draw the inventory grid and items."""
@@ -67,20 +72,20 @@ class Inventory:
 
         mouse_pos = pygame.mouse.get_pos()
         slot = self.get_slot_at_mouse(mouse_pos)
-        if slot and player.inventory[slot[0]][slot[1]]:
+        if slot[0] is not None and player.inventory[slot[0]][slot[1]]:
             row, col = slot
             item = player.inventory[row][col]
-            self.draw_description(surface, item, (mouse_pos[0] + 20, mouse_pos[1] + 20))
+            if not item.id == 0:
+                self.draw_description(surface, item, (mouse_pos[0] + 20, mouse_pos[1] + 20))
 
     def draw_item(self, surface, item, row, col):
         """Draw a single item in the inventory."""
         item_x = self.start_x + col * self.slot_size[0]
         item_y = self.start_y + row * self.slot_size[1]
 
-        image = pygame.image.load(item.image)
-        scaled_image = pygame.transform.scale(image, self.slot_size)
+        image = get_image(item.image)
 
-        surface.blit(scaled_image, (item_x, item_y))
+        surface.blit(image, (item_x, item_y))
         if item.quantity:
             self.draw_quantity(surface, item, item_x, item_y)
 
@@ -94,7 +99,8 @@ class Inventory:
         """Highlight the selected item slot."""
         pos = pygame.mouse.get_pos()
         slot = self.get_slot_at_mouse(pos)
-        if slot:
+
+        if (slot[0] or slot[1]) is not None:
             highlight_rect = pygame.Rect(self.start_x + slot[1] * self.slot_size[0],
                                          self.start_y + slot[0] * self.slot_size[1],
                                          *self.slot_size)
@@ -135,47 +141,38 @@ class Inventory:
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             # Start dragging
             slot = self.get_slot_at_mouse(pygame.mouse.get_pos())
-            if slot:
-                self.start_dragging(player.inventory, *slot)
+            if slot[0] is not None:
+                self.start_dragging(player, *slot)
 
-        elif event.type == pygame.MOUSEBUTTONUP:
-            slot = self.get_slot_at_mouse(pygame.mouse.get_pos())
-            if slot:
-                self.end_dragging(player, *slot)
-            else:
-                self.dragging_item = None
-                self.drag_start_pos = None
+        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            row, col = self.get_slot_at_mouse(pygame.mouse.get_pos())
+            if row is not None and self.dragging:
+                player.swap_items(self.dragging_start_pos[0], self.dragging_start_pos[1], row, col)
+            elif self.dragging:
+                player.add_item_to_inventory(player.dragging_item, *self.dragging_start_pos)
+
+            self.end_dragging(player)
 
     def get_slot_at_mouse(self, mouse_pos):
-        # Calculate the column and row number based on the mouse position
-        slot_width, slot_height = self.slot_size
-
-        # Adjust these offsets if your inventory isn't drawn directly at (start_x, start_y)
-        offset_x = self.start_x
-        offset_y = self.start_y
-
-        # Calculate column and row indices
-        column = (mouse_pos[0] - offset_x) // slot_width
-        row = (mouse_pos[1] - offset_y) // slot_height
-
-        # Check if the column and row are within the bounds of the inventory grid
-        if 0 <= column < 5 and 0 <= row < 8:  # Adjust the numbers based on your grid size
+        # Calculate the column and row indices based on the mouse position
+        column = (mouse_pos[0] - self.start_x) // self.slot_size[0]
+        row = (mouse_pos[1] - self.start_y) // self.slot_size[1]
+        # Check if the indices are within the bounds of the inventory
+        if 0 <= column < 5 and 0 <= row < 8:
             return row, column
-        return None  # Return None if the mouse isn't over any slot
+        return None, None
 
-    def start_dragging(self, inventory, row, col):
+    def start_dragging(self, player, row, col):
         """Start dragging an item from a specific row and col."""
-        self.dragging_item = inventory[row][col]
+        player.dragging_item = player.remove_item_from_inventory(row, col)
         self.dragging_start_pos = (row, col)
+        self.dragging = True
 
-    def end_dragging(self, player, row, col):
-        """End dragging an item onto a specific row and col."""
-        if self.dragging_item and (row, col) != self.dragging_start_pos:
-            # Swap the items
-            player.swap_items(*self.dragging_start_pos, row, col)
+    def end_dragging(self, player):
         # Reset dragging state
-        self.dragging_item = None
-        self.drag_start_pos = None
+        player.dragging_item = None
+        self.dragging_start_pos = None
+        self.dragging = False
 
     # def search_items(self):
     #     if self.search_query == "":
@@ -193,12 +190,11 @@ class EquipmentSlot:
         self.slot_name = slot_name
         self.slot_type = slot_type
         self.slot_size = (64, 64)
-        self.slot_image = pygame.image.load(image_path).convert_alpha()
-        self.slot_image = pygame.transform.scale(self.slot_image, (64, 64))
-        self.slot_image_selected = to_grayscale_optimized(self.slot_image)
-        self.item = None  # No item equipped initially
-        self.item_image = None
+        self.slot_image = get_image(image_path)
+        self.slot_image_selected = get_image(image_path[:-4] + '_gray' + image_path[-4:])
+        self.item = Items.Empty()  # No item equipped initially
         self.dragging = False
+        self.locked = False
 
     def set_position(self, position):
         """Set the position of the slot and update the slot_rect."""
@@ -210,33 +206,64 @@ class EquipmentSlot:
             return True
         return False
 
-    def start_dragging(self):
+    def is_two_handed_equipped(self):
+        if self.item:
+            if 'Versatile' in self.item.properties:
+                return True if self.item.properties['Versatile'] == 'two-hand' else False
+
+    def start_dragging(self, player):
+        player.dragging_item = self.item
+        player.equipment[self.slot_name] = Items.Empty()
         self.dragging = True
 
-    def stop_dragging(self):
+    def stop_dragging(self, player):
+        player.equipment[self.slot_name] = player.dragging_item
+        self.item = player.dragging_item
+        player.dragging_item = False
         self.dragging = False
 
-    def draw(self, surface, position, player):
+    def update(self, player):
         self.item = player.equipment[self.slot_name]
+
+    def draw(self, surface, position, player, equipment_dict=None):
+        self.item = player.equipment[self.slot_name]
+
+        if 'staff' in self.slot_type:
+            opposite = 'meleeOffHand' if self.slot_name == 'meleeMainHand' else 'meleeMainHand'
+            if self.is_two_handed_equipped():
+                equipment_dict[opposite].locked = True
+                opposite_slot = player.equipment[opposite]
+
+                if opposite_slot:
+                    # Move offhand item to inventory
+                    player.add_item_to_inventory(opposite_slot)
+                    player.equipment[opposite] = Items.Empty()
+            else:
+                equipment_dict[opposite].locked = False
+
         if self.item:
-            self.item_image = pygame.image.load(self.item.image).convert_alpha()
+            item_image = get_image(self.item.image)
+
         # Draw the slot
         self.set_position(position)
-        if not self.item:
+
+        if self.locked:
+            surface.blit(self.slot_image_selected, position)
+
+        elif self.item.id == 0:
             surface.blit(self.slot_image, position)
         else:
             surface.blit(self.slot_image_selected, position)
-            item_image = pygame.transform.scale(self.item_image, (64, 64))  # Assuming a 64x64 slot size
             surface.blit(item_image, position)
 
     def handle_event(self, event, player):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 pos = event.pos
-                if self.item and self.is_hovered(pos):
-                    self.start_dragging()
+                if not self.item.id == 0 and self.is_hovered(pos):
+                    self.start_dragging(player)
 
         elif event.type == pygame.MOUSEBUTTONUP:
             if self.dragging:
-                self.stop_dragging()
+                self.stop_dragging(player)
                 return event.pos
