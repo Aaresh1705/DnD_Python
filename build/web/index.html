@@ -483,6 +483,33 @@ frameborder="1"
         window.frames["iframe"].location = url;
     }
 
+    function saveTextAsFile(text, filename) {
+        const blob = new Blob([text], {type: 'text/plain'});
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+
+
+    window.loadFile = function(event) {
+        const reader = new FileReader();
+        reader.onload = function() {
+            const fileContent = reader.result;
+            // Call the Python function directly
+            window.handle_uploaded_file(fileContent);
+        };
+        reader.readAsText(event.target.files[0]);
+    }
+
+    window.promptFileUpload = function() {
+        document.getElementById('fileInput').click();
+    }
+
     </script>
 
 </body>
