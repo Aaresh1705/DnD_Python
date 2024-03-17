@@ -339,6 +339,13 @@ config = {
            right:10px;
            border: 1px solid black;
         }
+        .center2 {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            visibility: hidden;
+        }
     </style>
 
     <script src="https://pygame-web.github.io/archives/0.9//browserfs.min.js"></script>
@@ -419,6 +426,8 @@ frameborder="1"
         <div id="terminal" tabIndex=1 align="left"></div>
     </div>
 
+    <input type="file" class="center2" id="fileInput" onchange="loadFile(event)">
+
     <script type="application/javascript">
 
     async function custom_onload(debug_hidden) {
@@ -497,6 +506,7 @@ frameborder="1"
 
 
     window.loadFile = function(event) {
+        console.log(5)
         const reader = new FileReader();
         reader.onload = function() {
             const fileContent = reader.result;
@@ -507,6 +517,7 @@ frameborder="1"
     }
 
     window.promptFileUpload = function() {
+        console.log(10)
         document.getElementById('fileInput').click();
     }
 

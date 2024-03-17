@@ -9,6 +9,12 @@ from pages import MainPage, InvPage, SpellPage, TurnPage, ChangePage
 from playerscripts.player import Player
 
 
+from js import window
+from js import window
+from js import eval as js_eval
+import json
+
+
 def get_save_filt():
     print("---============================---")
     load_file = input(
@@ -28,17 +34,9 @@ def get_save_filt():
 
 
 async def main():
-    load_file, save_file = "", "c.txt"
-
-    if not sys.platform in ('emscripten', 'wasm'):
-        print(1)
-        screen = pygame.display.set_mode((1280, 720), pygame.SCALED)
-    else:
-        print(2)
-        from js import window
-        browser_width = window.innerWidth
-        browser_height = window.innerHeight
-        screen = pygame.display.set_mode((browser_width, browser_height), 0)
+    browser_width = window.innerWidth
+    browser_height = window.innerHeight
+    screen = pygame.display.set_mode((browser_width, browser_height), 0)
 
     pygame.display.set_caption("Goblin Lord")
 
@@ -46,8 +44,6 @@ async def main():
     font = pygame.font.Font(FONT, 16)
 
     player = Player()
-    if load_file:
-        player.load(load_file)
 
     space = 150
     bars = {
@@ -75,6 +71,16 @@ async def main():
 
             screen.blit(text_surf, text_rect)
 
+    def handle_uploaded_file(file_content):
+        window.console.log(player.level)
+        player.load(file_content)
+        window.console.log(file_content)
+        window.console.log(player.level)
+
+    window.console.log("This is a log message from Python!")
+
+    window.handle_uploaded_file = handle_uploaded_file
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -87,28 +93,27 @@ async def main():
                     sys.exit()
 
                 if event.key == pygame.K_1:
-                    player.save(save_file)
+                    js_eval(f'saveTextAsFile({json.dumps(player.save())}, {json.dumps(f"{player.name}.txt")})')
 
                 if event.key == pygame.K_2:
-                    player.load(save_file)
+                    window.promptFileUpload()
 
             if event.type == pygame.VIDEORESIZE:
                 old_surface_saved = screen
                 screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
                 screen.blit(old_surface_saved, (0, 0))
                 del old_surface_saved
-            
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     for bar_name, (rect, page_) in bars.items():
                         if rect.collidepoint(event.pos):
                             active_bar = bar_name
                             page = page_
-                            
+
                             break
 
             page.handle_event(event, player)
-
 
         screen.fill(0x1F1F1F)
 

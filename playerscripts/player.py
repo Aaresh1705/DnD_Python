@@ -94,72 +94,66 @@ class Player:
         dictionary = {key: DICT[id]() for key, id in id_dictionary.items()}
         return dictionary
 
-    def load(self, filename: str) -> None:
-        with open(filename, 'r') as file:
-            contents: list[str] = file.read().split('  ')
+    def load(self, content: str) -> None:
+        contents: list[str] = content.split('  ')
 
-            easy_attributes: dict[str, int | str] = ast.literal_eval(contents[0])
+        easy_attributes: dict[str, int | str] = ast.literal_eval(contents[0])
 
-            self.name = easy_attributes.pop('name')
-            for key, val in easy_attributes.items():
-                setattr(self, key, val)
+        self.name = easy_attributes.pop('name')
+        for key, val in easy_attributes.items():
+            setattr(self, key, val)
 
-            hard_attributes: dict[str, any] = ast.literal_eval(contents[1])
+        hard_attributes: dict[str, any] = ast.literal_eval(contents[1])
 
-            self.race = RACE_DICT[hard_attributes['race']]
-            self.char_class = CHAR_CLASS_DICT[hard_attributes['char_class']]
-            self.background = BACKGROUND_DICT[hard_attributes['background']]
+        self.race = RACE_DICT[hard_attributes['race']]
+        self.char_class = CHAR_CLASS_DICT[hard_attributes['char_class']]
+        self.background = BACKGROUND_DICT[hard_attributes['background']]
 
-            self.inventory = self.id_matrix_to_matrix(hard_attributes['inventory'], ITEMS_ID_DICT)
-            self.grouped_actions = self.id_matrix_to_matrix(hard_attributes['grouped_actions'], ACTIONS_ID_DICT)
-            self.grouped_buffs = self.id_matrix_to_matrix(hard_attributes['grouped_buffs'], BUFFS_ID_DICT)
-            self.equipment = self.id_dict_to_dict(hard_attributes['equipment'], ITEMS_ID_DICT)
+        self.inventory = self.id_matrix_to_matrix(hard_attributes['inventory'], ITEMS_ID_DICT)
+        self.grouped_actions = self.id_matrix_to_matrix(hard_attributes['grouped_actions'], ACTIONS_ID_DICT)
+        self.grouped_buffs = self.id_matrix_to_matrix(hard_attributes['grouped_buffs'], BUFFS_ID_DICT)
+        self.equipment = self.id_dict_to_dict(hard_attributes['equipment'], ITEMS_ID_DICT)
 
         self.update()
 
-        print(f'{self.name} is now loaded from: {filename}')
+    def save(self) -> str:
+        contents = (
+            '{'
+            f'"name": "{self.name}", '
 
-    def save(self, filename: str) -> None:
-        with open(filename, 'w') as file:
-            contents = (
-                '{'
-                f'"name": "{self.name}", '
+            f'"level": {self.level}, '
+            f'"max_health": {self.max_health}, '
+            f'"current_health": {self.current_health}, '
+            f'"temporary_health": {self.temporary_health}, '
 
-                f'"level": {self.level}, '
-                f'"max_health": {self.max_health}, '
-                f'"current_health": {self.current_health}, '
-                f'"temporary_health": {self.temporary_health}, '
+            f'"tool_proficiencies": {self.tool_proficiencies}, '
+            f'"armor_proficiencies": {self.armor_proficiencies}, '
+            f'"weapon_proficiency": {self.weapon_proficiency}, '
 
-                f'"tool_proficiencies": {self.tool_proficiencies}, '
-                f'"armor_proficiencies": {self.armor_proficiencies}, '
-                f'"weapon_proficiency": {self.weapon_proficiency}, '
+            f'"ability_scores": {self.ability_scores}, '
+            f'"ability_scores_none_mod": {self.ability_scores_none_mod}, '
+            f'"ability_scores_mod": {self.ability_scores_mod}, '
 
-                f'"ability_scores": {self.ability_scores}, '
-                f'"ability_scores_none_mod": {self.ability_scores_none_mod}, '
-                f'"ability_scores_mod": {self.ability_scores_mod}, '
+            f'"saves_none_mod": {self.saves_none_mod}, '
+            f'"saves_proficiency": {self.saves_proficiency}, '
 
-                f'"saves_none_mod": {self.saves_none_mod}, '
-                f'"saves_proficiency": {self.saves_proficiency}, '
+            f'"skill_proficiency": {self.skill_proficiency}, '
+            f'"skill_proficiency_butt_mod": {self.skill_proficiency_butt_mod}, '
+            f'"skill_misc_modifier": {self.skill_misc_modifier}'
+            '}  '
+            '{'
+            f'"race": "{self.race.name}", '
+            f'"char_class": "{self.char_class.name}", '
+            f'"background": "{self.background.name}", '
 
-                f'"skill_proficiency": {self.skill_proficiency}, '
-                f'"skill_proficiency_butt_mod": {self.skill_proficiency_butt_mod}, '
-                f'"skill_misc_modifier": {self.skill_misc_modifier}'
-                '}  '
-                '{'
-                f'"race": "{self.race.name}", '
-                f'"char_class": "{self.char_class.name}", '
-                f'"background": "{self.background.name}", '
+            f'"inventory": {self.matrix_to_id_matrix(self.inventory)}, '
+            f'"equipment": {self.dict_to_id_dict(self.equipment)}, '
+            f'"grouped_actions": {self.matrix_to_id_matrix(self.grouped_actions)}, '
+            f'"grouped_buffs": {self.matrix_to_id_matrix(self.grouped_buffs)}'
+            '}'
+        )
 
-                f'"inventory": {self.matrix_to_id_matrix(self.inventory)}, '
-                f'"equipment": {self.dict_to_id_dict(self.equipment)}, '
-                f'"grouped_actions": {self.matrix_to_id_matrix(self.grouped_actions)}, '
-                f'"grouped_buffs": {self.matrix_to_id_matrix(self.grouped_buffs)}'
-                '}'
-            )
-
-            file.write(contents)
-
-        print(f'{self.name} is now saved to: {filename}')
+        return contents
 
     def update_grouped_actions(self) -> None:
         all_actions = []
