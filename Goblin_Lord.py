@@ -30,12 +30,8 @@ def get_save_filt():
 async def main():
     load_file, save_file = "", "c.txt"
 
-    if not sys.platform in ('emscripten', 'wasm'):
-        print(1)
-        screen = pygame.display.set_mode((800, 620), pygame.SCALED)
-    else:
-        print(2)
-        screen = pygame.display.set_mode((800, 620), 0)
+
+    screen = pygame.display.set_mode((800, 620), 0)
 
     pygame.display.set_caption("Goblin Lord")
 
