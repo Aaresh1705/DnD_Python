@@ -87,7 +87,7 @@ class Actions:
                 "Though the product of magic, the tools are nonmagical,",
                 "and they vanish when you use this feature again."
             ]
-            self.image = 'images/actions/The Right Tool For The Job.png'
+            self.image = 'images/actions/The Right Tool for the Job.png'
 
         def action_description(self, player):
             return self.description

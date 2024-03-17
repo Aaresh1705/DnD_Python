@@ -15,24 +15,6 @@ from js import eval as js_eval
 import json
 
 
-def get_save_filt():
-    print("---============================---")
-    load_file = input(
-        "Input the file where you have saved your character,"
-        "\nif you have not saved character yet then just press enter:")
-
-    save_file = load_file
-    if not load_file:
-        print("---======---")
-        while not save_file:
-            save_file = input("Input the file location where you want to save your character:")
-            if save_file:
-                break
-            print("Invalid input")
-
-    return load_file, save_file
-
-
 async def main():
     browser_width = window.innerWidth
     browser_height = window.innerHeight
