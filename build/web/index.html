@@ -62,7 +62,7 @@ async def custom_site():
     import embed
 
 
-    platform.document.body.style.background = "#1F1F1F"
+    platform.document.body.style.background = "#7f7f7f"
 
     import pygame
 
@@ -339,6 +339,7 @@ config = {
            right:10px;
            border: 1px solid black;
         }
+
         .center2 {
             position: absolute;
             top: 50%;
@@ -492,7 +493,7 @@ frameborder="1"
         window.frames["iframe"].location = url;
     }
 
-    function saveTextAsFile(text, filename) {
+        function saveTextAsFile(text, filename) {
         const blob = new Blob([text], {type: 'text/plain'});
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -506,7 +507,6 @@ frameborder="1"
 
 
     window.loadFile = function(event) {
-        console.log(5)
         const reader = new FileReader();
         reader.onload = function() {
             const fileContent = reader.result;
@@ -517,7 +517,6 @@ frameborder="1"
     }
 
     window.promptFileUpload = function() {
-        console.log(10)
         document.getElementById('fileInput').click();
     }
 

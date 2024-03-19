@@ -43,7 +43,7 @@ class Player:
 
         self.inventory: list[list[GenericItem]] = [[Items.Empty() for _ in range(5)] for _ in range(8)]  # 8 rows and 5 columns
 
-        self.equipment: dict[str, Items | None] = {  # This dictionary represents the equipped items
+        self.equipment: dict[str, Items] = {  # This dictionary represents the equipped items
             'helmet': Items.Empty(),
             'cloak': Items.Empty(),
             'chestplate': Items.Empty(),
@@ -74,13 +74,33 @@ class Player:
         return id_matrix
 
     @staticmethod
-    def id_matrix_to_matrix(id_matrix: list[list[int]], DICT: dict[object]) -> list[list]:
+    def id_matrix_to_matrix(id_matrix: list[list[int] | int], DICT: dict[object], attributes=None) -> list[list]:
         if not id_matrix:
             return []
-        elif isinstance(id_matrix[0], list):
-            matrix = [[DICT[id]() for id in row] for row in id_matrix]
+
+        def create_item(item_id, attr=None):
+            item_class = DICT.get(int(item_id))
+            if item_class is None:
+                return None  # or raise an error
+            if attr:
+                return item_class(**attr)
+            return item_class()
+
+        if isinstance(id_matrix[0], list):
+            # Handling a 2D matrix
+            if attributes and isinstance(attributes[0], list):
+                matrix = [
+                    [create_item(item_id, attr) for item_id, attr in zip(row, attr_row)]
+                    for row, attr_row in zip(id_matrix, attributes)
+                ]
+            else:
+                matrix = [[create_item(item_id) for item_id in row] for row in id_matrix]
         else:
-            matrix = [DICT[id]() for id in id_matrix]
+            # Handling a 1D list
+            if attributes:
+                matrix = [create_item(item_id, attr) for item_id, attr in zip(id_matrix, attributes)]
+            else:
+                matrix = [create_item(item_id) for item_id in id_matrix]
 
         return matrix
 
@@ -90,9 +110,27 @@ class Player:
         return id_dict
 
     @staticmethod
-    def id_dict_to_dict(id_dictionary: dict[str, int], DICT: dict[object]) -> dict[str, object]:
-        dictionary = {key: DICT[id]() for key, id in id_dictionary.items()}
+    def id_dict_to_dict(id_dictionary: dict[str, int], DICT: dict[object], attributes=None) -> dict[str, object]:
+        if attributes is None:
+            attributes = {}
+        dictionary = {key: DICT[id](**attributes.get(key, {})) for key, id in id_dictionary.items() if id in DICT}
         return dictionary
+
+    @staticmethod
+    def get_args_from_matrix(matrix: list[list[object] | object]):
+        if not matrix:
+            return []
+        elif isinstance(matrix[0], list):
+            id_matrix = [[element._init_args for element in row] for row in matrix]
+        else:
+            id_matrix = [element._init_args for element in matrix]
+
+        return id_matrix
+
+    @staticmethod
+    def get_args_from_dict(dictionary: dict[str, Items]):
+        id_dict = {key: element._init_args for key, element in dictionary.items()}
+        return id_dict
 
     def load(self, content: str) -> None:
         contents: list[str] = content.split('  ')
@@ -109,14 +147,24 @@ class Player:
         self.char_class = CHAR_CLASS_DICT[hard_attributes['char_class']]
         self.background = BACKGROUND_DICT[hard_attributes['background']]
 
-        self.inventory = self.id_matrix_to_matrix(hard_attributes['inventory'], ITEMS_ID_DICT)
-        self.grouped_actions = self.id_matrix_to_matrix(hard_attributes['grouped_actions'], ACTIONS_ID_DICT)
+        inv = hard_attributes['inventory']
+        self.inventory = self.id_matrix_to_matrix(inv['id'], ITEMS_ID_DICT, attributes=inv['attributes'])
+
+        grouped_actions = hard_attributes['grouped_actions']
+        self.grouped_actions = self.id_matrix_to_matrix(grouped_actions['id'], ACTIONS_ID_DICT, attributes=grouped_actions['attributes'])
+
         self.grouped_buffs = self.id_matrix_to_matrix(hard_attributes['grouped_buffs'], BUFFS_ID_DICT)
-        self.equipment = self.id_dict_to_dict(hard_attributes['equipment'], ITEMS_ID_DICT)
+
+        equipment = hard_attributes['equipment']
+        self.equipment = self.id_dict_to_dict(equipment['id'], ITEMS_ID_DICT, attributes=equipment['attributes'])
 
         self.update()
 
     def save(self) -> str:
+        inv = {"id": self.matrix_to_id_matrix(self.inventory), "attributes": self.get_args_from_matrix(self.inventory)}
+        grouped_actions = {"id": self.matrix_to_id_matrix(self.grouped_actions), "attributes": self.get_args_from_matrix(self.grouped_actions)}
+        equipment = {"id": self.dict_to_id_dict(self.equipment), "attributes": self.get_args_from_dict(self.equipment)}
+
         contents = (
             '{'
             f'"name": "{self.name}", '
@@ -146,9 +194,9 @@ class Player:
             f'"char_class": "{self.char_class.name}", '
             f'"background": "{self.background.name}", '
 
-            f'"inventory": {self.matrix_to_id_matrix(self.inventory)}, '
-            f'"equipment": {self.dict_to_id_dict(self.equipment)}, '
-            f'"grouped_actions": {self.matrix_to_id_matrix(self.grouped_actions)}, '
+            f'"inventory": {inv}, '
+            f'"equipment": {equipment}, '
+            f'"grouped_actions": {grouped_actions}, '
             f'"grouped_buffs": {self.matrix_to_id_matrix(self.grouped_buffs)}'
             '}'
         )

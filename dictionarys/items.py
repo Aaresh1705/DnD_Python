@@ -18,6 +18,7 @@ class GenericItem:
     def __init__(self):
         self.id = 0
 
+        self._init_args = {}
         self.name = ""
         self.properties = {}
         self.magic = 0
@@ -75,13 +76,14 @@ class Items:
             self.image = 'images/Transparent.png'
 
     class Quarterstaff(GenericItem):
-        def __init__(self, magic: int = 0):
+        def __init__(self, magic: int = 0, versatile: str = 'one-hand'):
             super().__init__()
             self.id = 1
-
+            self._versatile = versatile
+            self._init_args = {'magic': magic, 'versatile': self._versatile}
             self.types = ['simple', 'staff']
             self.damage_type = 'Bludgeoning'
-            self.properties = {'Versatile': 'one-hand'}
+            self.properties = {'Versatile': self._versatile}
             self.magic = magic
             self.image = 'images/weapons/quarterstaff.png'
             self.scaling = ['str']
@@ -102,7 +104,7 @@ class Items:
                 f'Damage: 0'
             ]
             hit_image = 'images/standard actions/Large Sword.png'
-            self.actions = {'hit': Actions.Hit(self.name, hit_description, hit_image)}
+            self.actions = {'hit': Actions.Hit(self.name, hit_description, hit_image, 7.1)}
 
         def update(self, player):
             self.actions['hit'].description = [
@@ -142,12 +144,23 @@ class Items:
 
             return self.info
 
+        @property
+        def versatile(self):
+            return self._versatile
+
+        @versatile.setter
+        def versatile(self, value):
+            self._versatile = value
+            self._init_args['versatile'] = value
+            self.properties['Versatile'] = value
+
     class GeniusSteamGun(GenericItem):
         def __init__(self, magic: int = 0):
             super().__init__()
 
             self.id = 2
 
+            self._init_args = {'magic': magic}
             self.types = ['firearm']
             self.damage_type = 'piercing'
             self.magic = magic
@@ -170,7 +183,7 @@ class Items:
                 f'Damage: 0'
             ]
             hit_image = 'images/standard actions/Large Sword.png'
-            self.actions = {'hit': Actions.Hit(self.name, hit_description, hit_image)}
+            self.actions = {'hit': Actions.Hit(self.name, hit_description, hit_image, 7.2)}
 
         def update(self, player):
             self.actions['hit'].description = [

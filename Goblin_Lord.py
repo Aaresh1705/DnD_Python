@@ -1,24 +1,41 @@
-import pygame
-import sys
+# Initial setup: Import dependencies
+# - Standard library imports for basic functionality and compatibility checks.
+# - Local application/library specific imports for game configuration and pages.
 import asyncio
-
-pygame.init()
+import json
+import sys
 
 from global_config import *
 from pages import MainPage, InvPage, SpellPage, TurnPage, ChangePage
 from playerscripts.player import Player
 
+# Environment check and configuration
+# - Determine the execution environment (web or local) to adapt game settings accordingly.
+# - If running in a web environment, import JavaScript interop modules for file handling.
+web = False
+if sys.platform == "emscripten":
+    web = True
+    from js import window, eval as js_eval
+    window.console.log(2)
 
-from js import window
-from js import window
-from js import eval as js_eval
-import json
 
-
+# Main game function
+# - Handles the setup and main loop of the game, adjusting display settings based on environment.
+# - Initializes game window, clock, font, player, and navigation bars.
+# - Defines function for drawing navigation bars and handling file uploads (web only).
 async def main():
-    browser_width = window.innerWidth
-    browser_height = window.innerHeight
-    screen = pygame.display.set_mode((browser_width, browser_height), 0)
+    # Screen setup: Adjust window size for web or default settings.
+    # Game initialization: Set window title, initialize clock for frame timing, and create font object for text rendering.
+    # Player and UI setup: Instantiate the player and setup UI elements like navigation bars.
+    scale = 1.5
+    if web:
+        web_width = window.innerWidth
+        web_height = window.innerHeight
+        screen = pygame.display.set_mode((web_width, web_height), 0)
+    else:
+        width = 1280
+        height = 720
+        screen = pygame.display.set_mode((width, height), pygame.SCALED)
 
     pygame.display.set_caption("Goblin Lord")
 
@@ -28,7 +45,7 @@ async def main():
     player = Player()
 
     space = 150
-    bars = {
+    bars = {                   # x, y,   w,  h
         'main_bar': [pygame.Rect(5, 5, 100, 30), MainPage(screen, player)],
         'inv_bar': [pygame.Rect(5 + space, 5, 100, 30), InvPage(screen, player)],
         'spell_bar': [pygame.Rect(5 + space * 2, 5, 100, 30), SpellPage(screen, player)],
@@ -54,15 +71,16 @@ async def main():
             screen.blit(text_surf, text_rect)
 
     def handle_uploaded_file(file_content):
-        window.console.log(player.level)
+        # window.console.log(player.level)
         player.load(file_content)
-        window.console.log(file_content)
-        window.console.log(player.level)
 
-    window.console.log("This is a log message from Python!")
+    if web:
+        window.handle_uploaded_file = handle_uploaded_file
 
-    window.handle_uploaded_file = handle_uploaded_file
-
+    # Main loop: Handles game events, updates, and rendering.
+    # - Event handling: Quit, keyboard inputs, and mouse interactions.
+    # - Game state updates: Player and current page updates.
+    # - Rendering: Clear screen, draw current page and navigation bars, update display.
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -75,16 +93,18 @@ async def main():
                     sys.exit()
 
                 if event.key == pygame.K_1:
-                    js_eval(f'saveTextAsFile({json.dumps(player.save())}, {json.dumps(f"{player.name}.txt")})')
+                    if web:
+                        js_eval(f'saveTextAsFile({json.dumps(player.save())}, {json.dumps(f"{player.name}.txt")})')
 
                 if event.key == pygame.K_2:
-                    window.promptFileUpload()
+                    if web:
+                        window.promptFileUpload()
 
-            if event.type == pygame.VIDEORESIZE:
-                old_surface_saved = screen
-                screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
-                screen.blit(old_surface_saved, (0, 0))
-                del old_surface_saved
+            # if event.type == pygame.VIDEORESIZE:
+            #     old_surface_saved = screen
+            #     screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+            #     screen.blit(old_surface_saved, (0, 0))
+            #     del old_surface_saved
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
@@ -105,7 +125,7 @@ async def main():
 
         draw_bars()
 
-        pygame.display.flip()
+        pygame.display.update()
         clock.tick(60)
 
         await asyncio.sleep(0)

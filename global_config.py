@@ -1,9 +1,7 @@
-import os
-
-if os.getenv('GAME') == '1':
-    pass
 import pygame
 from pygame import Surface
+
+pygame.init()
 
 
 def intToRoman(num) -> str:

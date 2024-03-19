@@ -5,8 +5,10 @@
       <node color="4" path="$PROJECT_DIR$/actionbar.py" />
       <node color="3" path="$PROJECT_DIR$/background.py" />
       <node color="3" path="$PROJECT_DIR$/classes.py" />
+      <node color="1" path="$PROJECT_DIR$/Dice Goblin" />
       <node color="1" path="$PROJECT_DIR$/Dice Goblin.py" />
       <node color="2" path="$PROJECT_DIR$/dices.py" />
+      <node color="5" path="$PROJECT_DIR$/dictionarys" />
       <node color="8" path="$PROJECT_DIR$/dictionarys/__init__.py" />
       <node color="5" path="$PROJECT_DIR$/dictionarys/actions.py" />
       <node color="5" path="$PROJECT_DIR$/dictionarys/buffs.py" />
@@ -14,10 +16,13 @@
       <node color="5" path="$PROJECT_DIR$/dictionarys/Spells.py" />
       <node color="3" path="$PROJECT_DIR$/global_config.py" />
       <node color="3" path="$PROJECT_DIR$/Goblin Lord.py" />
+      <node color="7" path="$PROJECT_DIR$/Goblin_Lord.py" />
       <node color="4" path="$PROJECT_DIR$/inventory.py" />
       <node color="4" path="$PROJECT_DIR$/items.py" />
+      <node color="7" path="$PROJECT_DIR$/main.py" />
       <node color="3" path="$PROJECT_DIR$/pages.py" />
       <node color="3" path="$PROJECT_DIR$/player.py" />
+      <node color="6" path="$PROJECT_DIR$/playerscripts" />
       <node color="8" path="$PROJECT_DIR$/playerscripts/__init__.py" />
       <node color="6" path="$PROJECT_DIR$/playerscripts/background.py" />
       <node color="6" path="$PROJECT_DIR$/playerscripts/classes.py" />

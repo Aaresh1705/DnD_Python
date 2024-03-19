@@ -1,5 +1,4 @@
 import numpy as np
-import pygame
 
 
 from global_config import *
@@ -16,9 +15,9 @@ from dictionarys.items import Items
 from dictionarys.actions import Actions
 
 
-class MainPage:  # TODO: Make saving throw things
-    def __init__(self, surface: pygame.Surface, *args):
-        player = args[0]
+class MainPage:
+    def __init__(self, surface: Surface, *args):
+        player: Player = args[0]
 
         """Text init"""
         self.font = pygame.font.Font(FONT, 16)
@@ -44,7 +43,6 @@ class MainPage:  # TODO: Make saving throw things
         }
 
         self.text_elements_right = {
-            # TODO: make it as the left text for pypy performance
             'ability_scores': (Text(self.font, f"{player.ability_scores}",
                            (20, 50), self.text_color), 'Ability_scores'),
         }
@@ -100,7 +98,7 @@ class MainPage:  # TODO: Make saving throw things
         self.scroll_min = 0
         self.scroll_max = -400
 
-    def draw(self, surface: pygame.Surface, *args):
+    def draw(self, surface: Surface, *args):
         player = args[0]
 
         """Left Text"""
@@ -138,42 +136,33 @@ class MainPage:  # TODO: Make saving throw things
             text_element.change_text(updated_text)
             text_element.draw(surface)
 
+    def draw_labels(self, surface, labels, starting_point, y_offset_step=30, x_offset=0):
+        for index, (label, value) in enumerate(labels):
+            text = f'{label}: {value}' if value is not None else label
+            label_surface = self.font.render(text, True, pygame.Color('white'))
+            label_rect = label_surface.get_rect(left=starting_point[0] + x_offset,
+                                                top=starting_point[1] + y_offset_step * index)
+            surface.blit(label_surface, label_rect)
+
     def draw_right_text(self, surface, player):
-        label_x_offset = surface.get_width() - 200
+        base_x_offset = surface.get_width() - 200
         label_y_offset = 350
 
-        # for key, (text_element, text) in self.text_elements_right.items():
-        #     attr_value = getattr(player, key, None)
-        #     updated_text = f"{key.replace('_', ' ').title()}: {attr_value}"
-        #     text_element.change_text(updated_text)
-        #     text_element.rect.topleft = (label_x_offset, label_y_offset)
-        #     text_element.draw(surface)
+        # Draw "Score" section
+        self.draw_labels(surface, [('Score', None)], (base_x_offset, label_y_offset - 40), x_offset=0)
 
-        label_surface = self.font.render('Score', True, pygame.Color('white'))
-        label_rect = label_surface.get_rect(left=label_x_offset, top=label_y_offset - 40)
-        surface.blit(label_surface, label_rect)
+        # Draw ability scores
+        self.draw_labels(surface, player.ability_scores.items(), (base_x_offset, label_y_offset))
 
-        for index, (stat, value) in enumerate(player.ability_scores.items()):
-            # Render the stat name
-            label_surface = self.font.render(f'{stat}: {value}', True, pygame.Color('white'))
-            label_rect = label_surface.get_rect(left=label_x_offset, top=label_y_offset + 30 * index)
+        # Move the x offset for the next section
+        next_section_x_offset = 100
 
-            # Blit both surfaces to the screen
-            surface.blit(label_surface, label_rect)
+        # Draw "Save" section
+        self.draw_labels(surface, [('Save', None)], (base_x_offset, label_y_offset - 40),
+                         x_offset=next_section_x_offset)
 
-        label_x_offset += 100
-
-        label_surface = self.font.render('Save', True, pygame.Color('white'))
-        label_rect = label_surface.get_rect(left=label_x_offset, top=label_y_offset - 40)
-        surface.blit(label_surface, label_rect)
-
-        for index, (stat, value) in enumerate(player.saves.items()):
-            # Render the stat name
-            label_surface = self.font.render(f'{stat}: {value}', True, pygame.Color('white'))
-            label_rect = label_surface.get_rect(left=label_x_offset, top=label_y_offset + 30 * index)
-
-            # Blit both surfaces to the screen
-            surface.blit(label_surface, label_rect)
+        # Draw save scores
+        self.draw_labels(surface, player.saves.items(), (base_x_offset, label_y_offset), x_offset=next_section_x_offset)
 
     def draw_hexagon_with_labels(self, surface, center, radius, angle, ability_scores_dict, angle_of_rotation):
         line_color = 0xB0B0B0
@@ -442,7 +431,7 @@ class InvPage:  # TODO: Finish InvPage
         if slot_name in player.equipment and 'Versatile' in player.equipment[slot_name].properties:
             current_mode = player.equipment[slot_name].properties['Versatile']
             new_mode = 'two-hand' if current_mode == 'one-hand' else 'one-hand'
-            player.equipment[slot_name].properties['Versatile'] = new_mode
+            player.equipment[slot_name].versatile = new_mode
 
     def draw_equipment_info(self, surface, item, position):
         line_height = self.font.get_linesize()

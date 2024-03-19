@@ -13,7 +13,7 @@ class ClassGeneric:
         self.buffs = defaultdict(object)
         self.actions = dict()
 
-        self.proficiencies = {}
+        #  self.proficiencies = {}  # I don't think this line was used to anything
 
         self.max_prepared_leveled_spells = 0
         self.max_prepared_cantrips = 0

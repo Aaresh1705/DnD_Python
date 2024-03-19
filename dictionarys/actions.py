@@ -1,14 +1,22 @@
 class Actions:
-    class Empty:
+    class ActionBase:
         def __init__(self):
             self.id = 0
-            self.name = 'Empty'
+            self.name = ''
             self.description = ''
+            self.image = ''
+            self._init_args = {}
+
+    class Empty(ActionBase):
+        def __init__(self):
+            super().__init__()
+            self.name = 'Empty'
 
             self.image = 'images/Transparent.png'
 
     class EldritchCannon:
         def __init__(self):
+            super().__init__()
             self.id = 1
             self.name = 'Eldritch Cannon'
             self.description = [
@@ -27,6 +35,7 @@ class Actions:
 
     class MagicalTinkering:
         def __init__(self):
+            super().__init__()
             self.id = 2
             self.name = 'Magical Tinkering'
             self.description = [
@@ -45,6 +54,7 @@ class Actions:
 
     class InfuseItem:
         def __init__(self):
+            super().__init__()
             self.id = 3
             self.name = 'Infuse Item'
             self.description = [
@@ -60,6 +70,7 @@ class Actions:
 
     class Tinker:
         def __init__(self):
+            super().__init__()
             self.id = 4
             self.name = 'Tinker'
             self.description = [
@@ -75,6 +86,7 @@ class Actions:
 
     class TheRightToolForTheJob:
         def __init__(self):
+            super().__init__()
             self.id = 5
             self.name = 'The Right Tool For The Job'
             self.description = [
@@ -94,6 +106,7 @@ class Actions:
 
     class FlashOfGenius:
         def __init__(self):
+            super().__init__()
             self.id = 6
             self.name = 'Flash of Genius'
             self.description = [
@@ -108,11 +121,13 @@ class Actions:
             return self.description
 
     class Hit:
-        def __init__(self, name='', desc='', img=''):
-            self.id = 7
+        def __init__(self, name='', desc='', img='', id=7):
+            super().__init__()
+            self.id = id
             self.name = name
             self.description = desc
             self.image = img
+            self._init_args = {'name': name, 'desc': desc, 'img': img, 'id': id}
 
         def action_description(self, player):
             return self.description
