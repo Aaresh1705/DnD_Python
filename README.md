@@ -1,4 +1,5 @@
 Go to [https://aaresh1705.github.io/DnD_Python/build/web/](https://aaresh1705.github.io/DnD_Python/build/web/) for the character creation.
+Made with pygame and pygbag.
 
 ## Controls for now:
 **PRESS 1:**
