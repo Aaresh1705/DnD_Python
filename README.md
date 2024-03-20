@@ -15,6 +15,6 @@ This program is still in **VERY early beta** and there's still **LOTS** of thing
 - Finish character save file *(deadline: 31/3/2024)*
 - Finish the change page *(deadline: 7/4/2024)*
 - Finish the Turn page to include turn-based combat *(deadline: 14/4/2024)*
-- Polish *(deadline: 0/5/2024)*
+- Polish *(deadline: 1/5/2024)*
 - Implement a few more races, classes, and backgrounds *(deadline: TBD)*
 - Implement feats *(deadline: TBD)*
